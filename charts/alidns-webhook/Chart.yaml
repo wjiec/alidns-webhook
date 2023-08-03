@@ -1,6 +1,9 @@
 apiVersion: v2
 name: alidns-webhook
 description: A Helm chart for Kubernetes
+home: https://github.com/wjiec/alidns-webhook
+sources:
+  - https://github.com/wjiec/alidns-webhook
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -22,3 +25,4 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
+
