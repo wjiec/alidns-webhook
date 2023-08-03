@@ -76,5 +76,5 @@ Create the name of the service account to use
 {{- end -}}
 
 {{- define "alidns-webhook.servingCertificate" -}}
-{{ printf "%s-webhook-tls" (include "alidns-webhook.fullname" .) }}
+{{ printf "%s-tls" (include "alidns-webhook.fullname" .) }}
 {{- end -}}

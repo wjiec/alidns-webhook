@@ -18,7 +18,7 @@ replicaCount: 1
 
 image:
   repository: wjiec/alidns-webhook
-  tag: latest
+  tag: ""
   pullPolicy: IfNotPresent
 
 nameOverride: ""

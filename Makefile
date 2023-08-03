@@ -3,7 +3,7 @@ OS ?= $(shell $(GO) env GOOS)
 ARCH ?= $(shell $(GO) env GOARCH)
 
 IMAGE_NAME := wjiec/alidns-webhook
-IMAGE_TAG := latest
+IMAGE_TAG := $(shell cat VERSION)
 
 KUBE_VERSION=1.25.0
 
