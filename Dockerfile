@@ -14,12 +14,10 @@ FROM build_deps AS builder
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -o alidns-webhook -ldflags '-w -extldflags "-static"' .
+RUN CGO_ENABLED=0 go build -o alidns-webhook -ldflags '-s -w' .
 
 
-FROM alpine
-
-RUN apk add --no-cache ca-certificates
+FROM alpine:3.17
 
 COPY --from=builder /workspace/alidns-webhook /usr/local/bin/alidns-webhook
 

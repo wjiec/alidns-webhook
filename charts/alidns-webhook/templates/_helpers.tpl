@@ -62,6 +62,17 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
+{{/*
+Docker image tag
+*/}}
+{{- define "alidns-webhook.imageTag" -}}
+{{- if .Values.image.tag }}
+{{- .Values.image.tag }}
+{{- else -}}
+v{{- .Chart.Version }}
+{{- end }}
+{{- end }}
+
 
 {{- define "alidns-webhook.selfSignedIssuer" -}}
 {{ printf "%s-selfsign" (include "alidns-webhook.fullname" .) }}
