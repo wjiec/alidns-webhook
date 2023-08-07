@@ -34,12 +34,14 @@ jobs:
       - name: Package
         run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-          mkdir _site && cd _site
+          mkdir -p _build && cd _build
           helm package ../charts/*
           helm repo index .
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./_build
 
   # Deployment job
   deploy:
