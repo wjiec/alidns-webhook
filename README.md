@@ -79,8 +79,7 @@ It will install the alidns-webhook in the cert-manager namespace, creating that 
 
 ### Supported Versions table
 
-Supported versions for the ingress-nginx project mean that we have completed E2E tests, and they are passing for
-the versions listed. Ingress-Nginx versions may work on older versions but the project does not make that guarantee.
+The following table lists the correspondences between alidns-webhook and k8s versions.
 
 | Alidns-Webhook version | k8s supported version | Helm Chart Version |
 |------------------------|-----------------------|--------------------|
