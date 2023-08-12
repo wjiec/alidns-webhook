@@ -76,6 +76,53 @@ helm upgrade --install alidns-webhook alidns-webhook \
 
 It will install the alidns-webhook in the cert-manager namespace, creating that namespace if it doesn't already exist.
 
+#### Creating Certificate or deploy a TLS Ingress
+
+We can deploy a certificate directly on Ingress, edit the ingress add the annotations:
+```yaml
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: foo-example-com
+  annotations:
+    cert-manager.io/cluster-issuer: "example-acme"
+    # cert-manager.io/issuer: "example-acme"
+spec:
+  tls:
+  - hosts:
+    - foo.example.com
+    secretName: foo-example-com-tls
+  rules:
+  - host: foo.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              name: http
+```
+
+Or we can create a Certificate resource that is to be honored by an issuer which is to be kept up-to-date.
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: star-example-com
+spec:
+  secretName: star-example-com-tls
+  commonName: "*.example.com"
+  dnsNames:
+  - "*.example.com"
+  issuerRef:
+    name: example-acme
+    kind: ClusterIssuer
+    # kind: Issuer
+```
+Then we can refer to that secrets(`secretName`) in Ingress.
+
 
 ### Supported Versions table
 
