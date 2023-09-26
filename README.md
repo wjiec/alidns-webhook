@@ -113,8 +113,9 @@ metadata:
   name: star-example-com
 spec:
   secretName: star-example-com-tls
-  commonName: "*.example.com"
+  commonName: "example.com"
   dnsNames:
+  - "example.com"
   - "*.example.com"
   issuerRef:
     name: example-acme
@@ -130,7 +131,7 @@ The following table lists the correspondences between alidns-webhook and k8s ver
 
 | Alidns-Webhook version | k8s supported version | Helm Chart Version |
 |------------------------|-----------------------|--------------------|
-| **v0.1.0**             | 1.27, 1.26            | 0.1.*              |
+| **v0.1.0**             | 1.28, 1.27, 1.26      | 0.1.*              |
 
 
 ## License
