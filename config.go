@@ -1,5 +1,7 @@
 package main
 
+// SPDX-License-Identifier: MIT
+
 import (
 	"encoding/json"
 	"fmt"

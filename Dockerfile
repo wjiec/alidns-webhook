@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 FROM golang:1.19-alpine AS build_deps
 
 RUN apk add --no-cache git
