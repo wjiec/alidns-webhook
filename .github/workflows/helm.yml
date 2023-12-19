@@ -1,9 +1,9 @@
 name: Helm Charts
 
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    tags:
+      - 'v*'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
