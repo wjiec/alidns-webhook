@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package main
 
 import (
@@ -6,16 +8,16 @@ import (
 	"time"
 
 	"github.com/cert-manager/cert-manager/pkg/issuer/acme/dns/util"
-	"github.com/cert-manager/cert-manager/test/acme/dns"
+	acmetest "github.com/cert-manager/cert-manager/test/acme"
 )
 
 func TestRunsSuite(t *testing.T) {
-	dns.NewFixture(new(AliSolver),
-		dns.SetResolvedZone(os.Getenv("TEST_ZONE_NAME")),
-		dns.SetDNSName(util.UnFqdn(os.Getenv("TEST_ZONE_NAME"))),
-		dns.SetAllowAmbientCredentials(false),
-		dns.SetManifestPath("testdata/alidns"),
-		dns.SetDNSServer("223.5.5.5:53"),
-		dns.SetPropagationLimit(10*time.Minute),
+	acmetest.NewFixture(new(AliSolver),
+		acmetest.SetResolvedZone(os.Getenv("TEST_ZONE_NAME")),
+		acmetest.SetDNSName(util.UnFqdn(os.Getenv("TEST_ZONE_NAME"))),
+		acmetest.SetAllowAmbientCredentials(false),
+		acmetest.SetManifestPath("testdata/alidns"),
+		acmetest.SetDNSServer("223.5.5.5:53"),
+		acmetest.SetPropagationLimit(10*time.Minute),
 	).RunConformance(t)
 }
