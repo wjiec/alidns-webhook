@@ -12,9 +12,29 @@ alidns-webhook is a generic ACME solver for [cert-manager](https://github.com/ce
 
 This tutorial will detail how to configure and install the webhook to your cluster with alidns.
 
+
+#### Install webhook
+
+Before installing this webhook, make sure you have `cert-manager` installed correctly.
+If you haven't installed it yet, you can get the installation instructions from the [cert-manager documentation][1].
+
+If you have Helm, you can deploy the alidns-webhook with the following command:
+```bash
+helm upgrade --install alidns-webhook alidns-webhook \
+    --repo https://wjiec.github.io/alidns-webhook \
+    --namespace cert-manager --create-namespace \
+    --set groupName=acme.yourcompany.com
+```
+
+It will install the alidns-webhook in the cert-manager namespace, creating that namespace if it doesn't already exist.
+
+
 #### Configure a issuer
 
-Create this definition locally and update the email address and groupName to your own.
+Create this definition locally and update the email address and groupName to your own. Please see more details in [cert-manager configuration][2].
+
+__Ensure the `groupName` matches the config in the webhook.__
+
 ```yaml
 #
 # example-acme-issuer.yaml
@@ -62,19 +82,6 @@ Once edited, apply the custom resource:
 kubectl create --edit -f example-acme-issuer.yaml
 ```
 
-#### Install webhook
-
-__Ensure the `groupName` matches the config in the ClusterIssuer.__
-
-If you have Helm, you can deploy the alidns-webhook with the following command:
-```bash
-helm upgrade --install alidns-webhook alidns-webhook \
-    --repo https://wjiec.github.io/alidns-webhook \
-    --namespace cert-manager --create-namespace \
-    --set groupName=acme.yourcompany.com
-```
-
-It will install the alidns-webhook in the cert-manager namespace, creating that namespace if it doesn't already exist.
 
 #### Creating Certificate or deploy a TLS Ingress
 
@@ -131,9 +138,13 @@ The following table lists the correspondences between alidns-webhook and k8s ver
 
 | Alidns-Webhook version | k8s supported version  | Helm Chart Version |
 |------------------------|------------------------|--------------------|
-| **v0.1.0**             | 1.28, 1.27, 1.26, 1.29 | 0.1.*              |
+| **v0.1.0**             | 1.29, 1.28, 1.27, 1.26 | 0.1.*              |
 
 
 ## License
 
 [MIT License](https://github.com/wjiec/alidns-webhook/blob/main/LICENSE)
+
+
+[1]: https://cert-manager.io/docs/installation/
+[2]: https://cert-manager.io/docs/configuration/
