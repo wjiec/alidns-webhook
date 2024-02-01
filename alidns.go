@@ -118,7 +118,7 @@ func (s *AliSolver) loadAliDNS(challenge *acme.ChallengeRequest) (*AliDNS, error
 		return nil, err
 	}
 
-	accessKeySecret, err := s.loadSecretData(cfg.AccessKeySecretRef, challenge.ResourceNamespace)
+	accessKeySecret, err := s.loadSecretData(cfg.SecretAccessKeyRef, challenge.ResourceNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -148,9 +148,22 @@ func (s *AliSolver) loadSecretData(selector cmmeta.SecretKeySelector, ns string)
 	}
 
 	if data, ok := secret.Data[selector.Key]; ok {
+		if !s.validSecretData(data) {
+			return nil, errors.Wrapf(err, "invalid value for secret %q", ns+"/"+selector.Name)
+		}
 		return data, nil
 	}
 	return nil, errors.Errorf("couldn't find key %q in secret %q", selector.Key, ns+"/"+selector.Name)
+}
+
+// validSecretData reports whether data contains a control byte.
+func (s *AliSolver) validSecretData(data []byte) bool {
+	for _, b := range data {
+		if b <= ' ' || b == 0x7f || b == '\t' {
+			return true
+		}
+	}
+	return false
 }
 
 // AliDNS is a client for manipulating Aliyun-DNS
