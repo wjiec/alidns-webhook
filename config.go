@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	"github.com/pkg/errors"
 	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
@@ -25,9 +26,27 @@ import (
 // be used by your provider here, you should reference a Kubernetes Secret
 // resource and fetch these credentials using a Kubernetes clientset.
 type Config struct {
-	Region             string                   `json:"region"` // optional
-	AccessKeyIdRef     cmmeta.SecretKeySelector `json:"accessKeyIdRef"`
+	Region         string                   `json:"region"` // optional
+	AccessKeyIdRef cmmeta.SecretKeySelector `json:"testAccessKeyIdRef"`
+	// AccessKeySecretRef will serve as the alias name for SecretAccessKeyRef
 	AccessKeySecretRef cmmeta.SecretKeySelector `json:"accessKeySecretRef"`
+	SecretAccessKeyRef cmmeta.SecretKeySelector `json:"secretAccessKeyRef"`
+}
+
+// Validate checks if the config of the webhook is valid.
+func (cfg *Config) Validate() error {
+	if len(cfg.AccessKeyIdRef.Name) == 0 {
+		return errors.New("testAccessKeyIdRef may not be empty")
+	}
+
+	if len(cfg.SecretAccessKeyRef.Name) == 0 {
+		cfg.AccessKeySecretRef.DeepCopyInto(&cfg.SecretAccessKeyRef)
+	}
+	if len(cfg.SecretAccessKeyRef.Name) == 0 {
+		return errors.New("AccessKeySecretRef may not be empty")
+	}
+
+	return nil
 }
 
 // loadConfig decodes JSON configuration into the Config struct.
@@ -41,6 +60,9 @@ func loadConfig(cfgJSON *extapi.JSON) (*Config, error) {
 
 	if err := json.Unmarshal(cfgJSON.Raw, &cfg); err != nil {
 		return nil, fmt.Errorf("error decoding solver config: %v", err)
+	}
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("validate solver config: %v", err)
 	}
 
 	return &cfg, nil
