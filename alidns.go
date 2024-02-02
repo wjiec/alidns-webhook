@@ -160,10 +160,10 @@ func (s *AliSolver) loadSecretData(selector cmmeta.SecretKeySelector, ns string)
 func (s *AliSolver) validSecretData(data []byte) bool {
 	for _, b := range data {
 		if b <= ' ' || b == 0x7f || b == '\t' {
-			return true
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 // AliDNS is a client for manipulating Aliyun-DNS

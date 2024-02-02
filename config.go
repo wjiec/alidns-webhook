@@ -27,7 +27,7 @@ import (
 // resource and fetch these credentials using a Kubernetes clientset.
 type Config struct {
 	Region         string                   `json:"region"` // optional
-	AccessKeyIdRef cmmeta.SecretKeySelector `json:"testAccessKeyIdRef"`
+	AccessKeyIdRef cmmeta.SecretKeySelector `json:"accessKeyIdRef"`
 	// AccessKeySecretRef will serve as the alias name for SecretAccessKeyRef
 	AccessKeySecretRef cmmeta.SecretKeySelector `json:"accessKeySecretRef"`
 	SecretAccessKeyRef cmmeta.SecretKeySelector `json:"secretAccessKeyRef"`
