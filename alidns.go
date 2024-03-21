@@ -118,7 +118,7 @@ func (s *AliSolver) loadAliDNS(challenge *acme.ChallengeRequest) (*AliDNS, error
 		return nil, err
 	}
 
-	accessKeySecret, err := s.loadSecretData(cfg.SecretAccessKeyRef, challenge.ResourceNamespace)
+	accessKeySecret, err := s.loadSecretData(cfg.AccessKeySecretRef, challenge.ResourceNamespace)
 	if err != nil {
 		return nil, err
 	}

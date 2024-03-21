@@ -26,24 +26,24 @@ import (
 // be used by your provider here, you should reference a Kubernetes Secret
 // resource and fetch these credentials using a Kubernetes clientset.
 type Config struct {
-	Region         string                   `json:"region"` // optional
-	AccessKeyIdRef cmmeta.SecretKeySelector `json:"accessKeyIdRef"`
-	// AccessKeySecretRef will serve as the alias name for SecretAccessKeyRef
+	Region             string                   `json:"region"` // optional
+	AccessKeyIdRef     cmmeta.SecretKeySelector `json:"accessKeyIdRef"`
 	AccessKeySecretRef cmmeta.SecretKeySelector `json:"accessKeySecretRef"`
+	// SecretAccessKeyRef will serve as the alias name for AccessKeySecretRef
 	SecretAccessKeyRef cmmeta.SecretKeySelector `json:"secretAccessKeyRef"`
 }
 
 // Validate checks if the config of the webhook is valid.
 func (cfg *Config) Validate() error {
 	if len(cfg.AccessKeyIdRef.Name) == 0 {
-		return errors.New("testAccessKeyIdRef may not be empty")
+		return errors.New("accessKeyIdRef may not be empty")
 	}
 
-	if len(cfg.SecretAccessKeyRef.Name) == 0 {
-		cfg.AccessKeySecretRef.DeepCopyInto(&cfg.SecretAccessKeyRef)
+	if len(cfg.AccessKeySecretRef.Name) == 0 {
+		cfg.SecretAccessKeyRef.DeepCopyInto(&cfg.AccessKeySecretRef)
 	}
-	if len(cfg.SecretAccessKeyRef.Name) == 0 {
-		return errors.New("AccessKeySecretRef may not be empty")
+	if len(cfg.AccessKeySecretRef.Name) == 0 {
+		return errors.New("accessKeySecretRef may not be empty")
 	}
 
 	return nil

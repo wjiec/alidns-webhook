@@ -19,11 +19,11 @@ var (
 		},
 		Key: "access-key-id",
 	}
-	testSecretAccessKeyRef = cmmeta.SecretKeySelector{
+	testAccessKeySecretRef = cmmeta.SecretKeySelector{
 		LocalObjectReference: cmmeta.LocalObjectReference{
 			Name: "alidns-secret",
 		},
-		Key: "secret-access-key",
+		Key: "access-key-secret",
 	}
 )
 
@@ -31,7 +31,7 @@ func TestConfig_Validate(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
 		correct := &Config{
 			AccessKeyIdRef:     testAccessKeyIdRef,
-			SecretAccessKeyRef: testSecretAccessKeyRef,
+			AccessKeySecretRef: testAccessKeySecretRef,
 		}
 
 		loaded, err := loadConfig(&extapi.JSON{Raw: mustMarshal(correct)})
@@ -43,7 +43,7 @@ func TestConfig_Validate(t *testing.T) {
 	t.Run("compatible", func(t *testing.T) {
 		correct := &Config{
 			AccessKeyIdRef:     testAccessKeyIdRef,
-			AccessKeySecretRef: testSecretAccessKeyRef,
+			SecretAccessKeyRef: testAccessKeySecretRef,
 		}
 
 		loaded, err := loadConfig(&extapi.JSON{Raw: mustMarshal(correct)})
@@ -59,14 +59,14 @@ func TestConfig_Validate(t *testing.T) {
 
 	t.Run("no accessKeyId", func(t *testing.T) {
 		bad := &Config{
-			SecretAccessKeyRef: testSecretAccessKeyRef,
+			SecretAccessKeyRef: testAccessKeySecretRef,
 		}
 
 		_, err := loadConfig(&extapi.JSON{Raw: mustMarshal(bad)})
 		assert.Error(t, err)
 	})
 
-	t.Run("no secretAccessKey", func(t *testing.T) {
+	t.Run("no accessKeySecret", func(t *testing.T) {
 		bad := &Config{
 			AccessKeyIdRef: testAccessKeyIdRef,
 		}
