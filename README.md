@@ -24,6 +24,10 @@ helm upgrade --install alidns-webhook alidns-webhook \
     --repo https://wjiec.github.io/alidns-webhook \
     --namespace cert-manager --create-namespace \
     --set groupName=acme.yourcompany.com
+
+# Note: If you installed cert-manager via bitnami charts, you need to add the additional
+#   `--set certManager.serviceAccountName=cert-manager-controller`
+# parameter to specify the ServiceAccount to use.
 ```
 
 It will install the alidns-webhook in the cert-manager namespace, creating that namespace if it doesn't already exist.
