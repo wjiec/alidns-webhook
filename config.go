@@ -26,10 +26,24 @@ import (
 // be used by your provider here, you should reference a Kubernetes Secret
 // resource and fetch these credentials using a Kubernetes clientset.
 type Config struct {
-	Region             string                   `json:"region"` // optional
-	AccessKeyIdRef     cmmeta.SecretKeySelector `json:"accessKeyIdRef"`
+	// Region can be used to select an access point close to the Webhook cluster node.
+	// Generally, it can be left unset.
+	//
+	// If you need to set it, refer to the table in https://next.api.aliyun.com/product/Alidns and
+	// fill in the value from the "Region ID" column on that page.
+	Region string `json:"region"`
+
+	// AccessKeyIdRef is a credential for accessing Aliyun OpenAPI, which can be created and managed
+	// in the RAM console.
+	AccessKeyIdRef cmmeta.SecretKeySelector `json:"accessKeyIdRef"`
+
+	// AccessKeySecretRef is the access credential secret that matches AccessKeyIdRef.
+	//
+	// This field follows Aliyun's naming style; you can configure either this or SecretAccessKeyRef.
 	AccessKeySecretRef cmmeta.SecretKeySelector `json:"accessKeySecretRef"`
-	// SecretAccessKeyRef will serve as the alias name for AccessKeySecretRef
+
+	// SecretAccessKeyRef is the access credential secret that matches AccessKeyIdRef.
+	// This field follows Amazon's naming style; you can configure either this or AccessKeySecretRef.
 	SecretAccessKeyRef cmmeta.SecretKeySelector `json:"secretAccessKeyRef"`
 }
 
