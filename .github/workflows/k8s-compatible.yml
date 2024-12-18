@@ -1,0 +1,149 @@
+name: Kubernetes Compatible
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check-compatible:
+    strategy:
+      matrix:
+        node-image:
+          - kindest/node:v1.26.15@sha256:c79602a44b4056d7e48dc20f7504350f1e87530fe953428b792def00bc1076dd
+          - kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a005dceb9546d20
+          - kindest/node:v1.28.15@sha256:a7c05c7ae043a0b8c818f5a06188bc2c4098f6cb59ca7d1856df00375d839251
+          - kindest/node:v1.29.12@sha256:62c0672ba99a4afd7396512848d6fc382906b8f33349ae68fb1dbfe549f70dec
+          - kindest/node:v1.30.8@sha256:17cd608b3971338d9180b00776cb766c50d0a0b6b904ab4ff52fd3fc5c6369bf
+          - kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Create kind cluster
+        id: kind
+        uses: helm/kind-action@main
+        with:
+          node_image: ${{ matrix.node-image }}
+          registry: true
+          registry_name: my-registry
+          registry_port: 5001
+          registry_enable_delete: true
+
+      - name: Verify kind installation
+        run: |
+          kubectl cluster-info
+
+      - name: Build webhook
+        id: build
+        run: |
+          IMAGE_TAG=$(openssl rand -hex 4)
+          IMAGE_REPOSITORY=${{ steps.kind.outputs.LOCAL_REGISTRY }}/alidns-webhook
+          IMAGE_NAME=$IMAGE_REPOSITORY IMAGE_TAG=$IMAGE_TAG make build
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "IMAGE_REPOSITORY=$IMAGE_REPOSITORY" >> $GITHUB_OUTPUT
+
+      - name: Install helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Verify helm installation
+        run: |
+          helm version
+
+      - name: Install cert-manager
+        run: |
+          helm upgrade cert-manager cert-manager --install \
+            --repo https://charts.jetstack.io \
+            --set crds.enabled=true \
+            --namespace cert-manager --create-namespace
+
+      - name: Wait for cert-manager to be ready
+        run: |
+          kubectl wait --namespace cert-manager --for=condition=available --timeout=300s deployment/cert-manager
+          kubectl wait --namespace cert-manager --for=condition=available --timeout=300s deployment/cert-manager-webhook
+          kubectl wait --namespace cert-manager --for=condition=available --timeout=300s deployment/cert-manager-cainjector
+
+      - name: Install webhook
+        run: |
+          helm upgrade --install alidns-webhook alidns-webhook \
+            --repo https://wjiec.github.io/alidns-webhook \
+            --namespace cert-manager --create-namespace \
+            --set groupName=acme.yourcompany.com \
+            --set image.repository=${{ steps.build.outputs.IMAGE_REPOSITORY }} \
+            --set image.tag=${{ steps.build.outputs.IMAGE_TAG }}
+
+      - name: Wait for webhook to be ready
+        run: |
+          kubectl wait --namespace cert-manager --for=condition=available --timeout=300s deployment/alidns-webhook
+
+      - name: Create ClusterIssuer
+        id: cluster-issuer
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: alidns-secret
+            namespace: cert-manager
+          stringData:
+            access-key-id: "${{ secrets.WEBHOOK_ACCESS_KEY_ID }}"
+            access-key-secret: "${{ secrets.WEBHOOK_ACCESS_KEY_SECRET }}"
+          ---
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: example-acme
+          spec:
+            acme:
+              server: https://acme-staging-v02.api.letsencrypt.org/directory
+              privateKeySecretRef:
+                name: example-acme
+              solvers:
+                - dns01:
+                    webhook:
+                      groupName: acme.yourcompany.com
+                      solverName: alidns
+                      config:
+                        accessKeyIdRef:
+                          name: alidns-secret
+                          key: access-key-id
+                        accessKeySecretRef:
+                          name: alidns-secret
+                          key: access-key-secret
+          EOF
+
+      - name: Wait for ClusterIssuer to be ready
+        run: |
+          kubectl wait --for=condition=ready --timeout=300s clusterissuer/example-acme
+
+      - name: Create certificate
+        run: |
+          RANDOM_SUB_DOMAIN=$(openssl rand -hex 6)
+          kubectl apply -f - <<EOF
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: random-cert
+          spec:
+            secretName: random-tls
+            commonName: "$RANDOM_SUB_DOMAIN.${{ secrets.WEBHOOK_DOMAIN_NAME }}"
+            dnsNames:
+              - "$RANDOM_SUB_DOMAIN.${{ secrets.WEBHOOK_DOMAIN_NAME }}"
+            issuerRef:
+              name: example-acme
+              kind: ClusterIssuer
+          EOF
+
+      - name: Wait for certificate to be ready
+        run: |
+          kubectl wait --for=condition=ready --timeout=650s certificate/random-cert
