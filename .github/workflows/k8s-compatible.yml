@@ -88,6 +88,9 @@ jobs:
 
       - name: Create ClusterIssuer
         id: cluster-issuer
+        env:
+          WEBHOOK_ACCESS_KEY_ID: ${{ secrets.WEBHOOK_ACCESS_KEY_ID }}
+          WEBHOOK_ACCESS_KEY_SECRET: ${{ secrets.WEBHOOK_ACCESS_KEY_SECRET }}
         run: |
           kubectl apply -f - <<EOF
           apiVersion: v1
@@ -96,8 +99,8 @@ jobs:
             name: alidns-secret
             namespace: cert-manager
           stringData:
-            access-key-id: "${{ secrets.WEBHOOK_ACCESS_KEY_ID }}"
-            access-key-secret: "${{ secrets.WEBHOOK_ACCESS_KEY_SECRET }}"
+            access-key-id: "${WEBHOOK_ACCESS_KEY_ID}"
+            access-key-secret: "${WEBHOOK_ACCESS_KEY_SECRET}"
           ---
           apiVersion: cert-manager.io/v1
           kind: ClusterIssuer
@@ -127,6 +130,8 @@ jobs:
           kubectl wait --for=condition=ready --timeout=300s clusterissuer/example-acme
 
       - name: Create certificate
+        env:
+          WEBHOOK_DOMAIN_NAME: ${{ secrets.WEBHOOK_DOMAIN_NAME }}
         run: |
           RANDOM_SUB_DOMAIN=$(openssl rand -hex 6)
           kubectl apply -f - <<EOF
@@ -136,9 +141,9 @@ jobs:
             name: random-cert
           spec:
             secretName: random-tls
-            commonName: "$RANDOM_SUB_DOMAIN.${{ secrets.WEBHOOK_DOMAIN_NAME }}"
+            commonName: "${RANDOM_SUB_DOMAIN}.${WEBHOOK_DOMAIN_NAME}"
             dnsNames:
-              - "$RANDOM_SUB_DOMAIN.${{ secrets.WEBHOOK_DOMAIN_NAME }}"
+              - "${RANDOM_SUB_DOMAIN}.${WEBHOOK_DOMAIN_NAME}"
             issuerRef:
               name: example-acme
               kind: ClusterIssuer

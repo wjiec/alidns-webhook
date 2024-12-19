@@ -3,6 +3,7 @@ Alidns-Webhook
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/wjiec/alidns-webhook)](https://goreportcard.com/report/github.com/wjiec/alidns-webhook)
 [![GitHub license](https://img.shields.io/github/license/wjiec/alidns-webhook.svg)](https://github.com/wjiec/alidns-webhook/blob/main/LICENSE)
+[![Kubernetes Compatible](https://github.com/wjiec/alidns-webhook/actions/workflows/k8s-compatible.yml/badge.svg)](https://github.com/wjiec/alidns-webhook/actions/workflows/k8s-compatible.yml)
 
 ## Overview
 
