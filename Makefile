@@ -5,7 +5,7 @@ ARCH ?= $(shell $(GO) env GOARCH)
 IMAGE_NAME ?= wjiec/alidns-webhook
 IMAGE_TAG ?= $(shell cat VERSION)
 
-KUBE_VERSION=1.28.3
+KUBE_VERSION=1.29.3
 
 export TEST_ASSET_ETCD=_test/kubebuilder/etcd
 export TEST_ASSET_KUBE_APISERVER=_test/kubebuilder/kube-apiserver
@@ -29,4 +29,4 @@ clean-kubebuilder:
 	rm -Rf _test/kubebuilder
 
 build:
-	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) --push .
