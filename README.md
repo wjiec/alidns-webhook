@@ -33,6 +33,14 @@ helm upgrade --install alidns-webhook alidns-webhook \
 
 It will install the alidns-webhook in the cert-manager namespace, creating that namespace if it doesn't already exist.
 
+##### Aliyun registry
+
+If you can't get the image directly through DockerHub, you can use Aliyun's image repository
+by adding the following parameter to the installation command:
+```plain
+--set image.repository=registry.cn-hangzhou.aliyuncs.com/wjiec/alidns-webhook
+```
+
 
 #### Configure a issuer
 
