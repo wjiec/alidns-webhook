@@ -152,3 +152,16 @@ jobs:
       - name: Wait for certificate to be ready
         run: |
           kubectl wait --for=condition=ready --timeout=650s certificate/random-cert
+
+  compatible-ok:
+    if: always()
+    needs: check-compatible
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Report job result
+        env:
+          COMPATIBLE_BUILD_RESULT: ${{ needs.check-compatible.result }}
+        run: |
+          if [[ $COMPATIBLE_BUILD_RESULT == "success" ]]; then exit 0; fi
+          exit 1
