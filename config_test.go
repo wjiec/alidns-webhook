@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-//go:build ci
 
 package main
 

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 
 	alidns "github.com/alibabacloud-go/alidns-20150109/v4/client"
@@ -117,10 +118,18 @@ func (s *AliSolver) loadAliDNS(challenge *acme.ChallengeRequest) (*AliDNS, error
 	if err != nil {
 		return nil, err
 	}
+	if trimmed := bytes.TrimSpace(accessKeyId); len(trimmed) != len(accessKeyId) {
+		klog.Warningf("There are blank characters in accessKeyId that have been trimmed")
+		accessKeyId = trimmed
+	}
 
 	accessKeySecret, err := s.loadSecretData(cfg.AccessKeySecretRef, challenge.ResourceNamespace)
 	if err != nil {
 		return nil, err
+	}
+	if trimmed := bytes.TrimSpace(accessKeySecret); len(trimmed) != len(accessKeySecret) {
+		klog.Warningf("There are blank characters in accessKeySecret that have been trimmed")
+		accessKeySecret = trimmed
 	}
 
 	var endpoint = "dns.aliyuncs.com"
@@ -159,7 +168,7 @@ func (s *AliSolver) loadSecretData(selector cmmeta.SecretKeySelector, ns string)
 // validSecretData reports whether data contains a control byte.
 func (s *AliSolver) validSecretData(data []byte) bool {
 	for _, b := range data {
-		if b <= ' ' || b == 0x7f || b == '\t' {
+		if b <= ' ' || b == 0x7f {
 			return false
 		}
 	}

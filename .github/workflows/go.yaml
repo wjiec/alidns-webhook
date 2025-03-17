@@ -27,4 +27,8 @@ jobs:
         run: go env -w CGO_ENABLED=0
 
       - name: Run Tests
-        run: go test -tags ci ./...
+        env:
+          WEBHOOK_ACCESS_KEY_ID: ${{ secrets.WEBHOOK_ACCESS_KEY_ID }}
+          WEBHOOK_ACCESS_KEY_SECRET: ${{ secrets.WEBHOOK_ACCESS_KEY_SECRET }}
+          WEBHOOK_DOMAIN_NAME: ${{ secrets.WEBHOOK_DOMAIN_NAME }}
+        run: make unit-test e2e-test
