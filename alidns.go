@@ -122,6 +122,9 @@ func (s *AliSolver) loadAliDNS(challenge *acme.ChallengeRequest) (*AliDNS, error
 		klog.Warningf("There are blank characters in accessKeyId that have been trimmed")
 		accessKeyId = trimmed
 	}
+	if !s.validSecretData(accessKeyId) {
+		return nil, errors.New("The accessKeyId contains invalid characters")
+	}
 
 	accessKeySecret, err := s.loadSecretData(cfg.AccessKeySecretRef, challenge.ResourceNamespace)
 	if err != nil {
@@ -130,6 +133,9 @@ func (s *AliSolver) loadAliDNS(challenge *acme.ChallengeRequest) (*AliDNS, error
 	if trimmed := bytes.TrimSpace(accessKeySecret); len(trimmed) != len(accessKeySecret) {
 		klog.Warningf("There are blank characters in accessKeySecret that have been trimmed")
 		accessKeySecret = trimmed
+	}
+	if !s.validSecretData(accessKeySecret) {
+		return nil, errors.New("The accessKeySecret contains invalid characters")
 	}
 
 	var endpoint = "dns.aliyuncs.com"
@@ -157,9 +163,6 @@ func (s *AliSolver) loadSecretData(selector cmmeta.SecretKeySelector, ns string)
 	}
 
 	if data, ok := secret.Data[selector.Key]; ok {
-		if !s.validSecretData(data) {
-			return nil, errors.Wrapf(err, "invalid value for secret %q", ns+"/"+selector.Name)
-		}
 		return data, nil
 	}
 	return nil, errors.Errorf("couldn't find key %q in secret %q", selector.Key, ns+"/"+selector.Name)
