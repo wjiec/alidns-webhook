@@ -151,7 +151,7 @@ The following table lists the correspondences between alidns-webhook and k8s ver
 
 | Alidns-Webhook version | k8s supported version              | Helm Chart Version |
 |------------------------|------------------------------------|--------------------|
-| **v1.0.1**             | 1.31, 1.30, 1.29, 1.28, 1.27, 1.26 | 1.0.*              |
+| **v1.0.&ast;**         | 1.31, 1.30, 1.29, 1.28, 1.27, 1.26 | 1.0.*              |
 | **v0.1.0**             | 1.31, 1.30, 1.29, 1.28, 1.27, 1.26 | 0.1.*              |
 
 
