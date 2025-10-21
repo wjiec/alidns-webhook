@@ -1,9 +1,10 @@
 name: Helm Charts
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows: ["Docker Build"]
+    types:
+      - completed
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -40,10 +41,11 @@ jobs:
 
       - name: Download charts
         run: |
-          helm repo add self $HELM_REPO
-          CHART_VERSIONS=$(helm search repo -l $HELM_CHATR | awk '(NR>1) { print $2 }')
-          mkdir -p _build && cd _build
-          for CHART_VERSION in $CHART_VERSIONS; do helm pull self/$HELM_CHATR --version $CHART_VERSION; done
+          if helm repo add self $HELM_REPO &>/dev/null; then
+            CHART_VERSIONS=$(helm search repo -l $HELM_CHATR | awk '(NR>1) { print $2 }')
+            mkdir -p _build && cd _build
+            for CHART_VERSION in $CHART_VERSIONS; do helm pull self/$HELM_CHATR --version $CHART_VERSION; done
+          fi
 
       - name: Package
         run: |
