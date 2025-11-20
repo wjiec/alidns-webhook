@@ -1,8 +1,6 @@
 module github.com/wjiec/alidns-webhook
 
-go 1.23.0
-
-toolchain go1.23.4
+go 1.25
 
 require (
 	github.com/alibabacloud-go/alidns-20150109/v4 v4.0.10
