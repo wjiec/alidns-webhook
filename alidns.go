@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"strings"
 
 	alidns "github.com/alibabacloud-go/alidns-20150109/v4/client"
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
@@ -55,8 +56,8 @@ func (s *AliSolver) Present(challenge *acme.ChallengeRequest) error {
 		return err
 	}
 
-	err = dns.AddRecord(challenge.ResolvedFQDN, challenge.ResolvedZone, challenge.Key)
-	if err != nil {
+	fqdn, zone := s.resolveChallengeDNSNames(s.ctx, challenge)
+	if err = dns.AddRecord(fqdn, zone, challenge.Key); err != nil {
 		klog.Errorf("Failed to add TXT record for %q cause by %q",
 			challenge.ResolvedFQDN, err.Error())
 	}
@@ -79,8 +80,8 @@ func (s *AliSolver) CleanUp(challenge *acme.ChallengeRequest) error {
 		return err
 	}
 
-	err = dns.DeleteRecord(challenge.ResolvedFQDN, challenge.ResolvedZone)
-	if err != nil {
+	fqdn, zone := s.resolveChallengeDNSNames(s.ctx, challenge)
+	if err = dns.DeleteRecord(fqdn, zone); err != nil {
 		klog.Errorf("Failed to delete TXT record for %q cause by %q",
 			challenge.ResolvedFQDN, err.Error())
 	}
@@ -176,6 +177,25 @@ func (s *AliSolver) validSecretData(data []byte) bool {
 		}
 	}
 	return true
+}
+
+// resolveChallengeDNSNames returns the FQDN and the zone encompassing the challenge.
+func (s *AliSolver) resolveChallengeDNSNames(ctx context.Context, challenge *acme.ChallengeRequest) (string, string) {
+	zone := challenge.ResolvedZone
+	// If the detected zone looks like a root domain with a trailing dot only,
+	// it is likely incorrect, so try to recover the authoritative zone via AliDNS.
+	if strings.Index(zone, ".") == len(zone)-1 {
+		klog.Warningf("The zone encompassing the FQDN is invalid: %v", zone)
+		resolvedZone, err := resolveZone(ctx, challenge.ResolvedFQDN, alidnsServers, true)
+		if err != nil {
+			klog.Warningf("Failed to resolve FQDN by alidns servers: %s", err)
+		}
+
+		zone = resolvedZone
+		klog.Infof("Discovered zone record %q for fqdn %q", zone, challenge.ResolvedFQDN)
+	}
+
+	return challenge.ResolvedFQDN, zone
 }
 
 // AliDNS is a client for manipulating Aliyun-DNS
