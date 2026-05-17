@@ -44,16 +44,15 @@ func dnsQuery(ctx context.Context, fqdn string, nameservers []string, recursive 
 	udp := &dns.Client{Net: "udp", Timeout: util.DNSTimeout}
 	tcp := &dns.Client{Net: "tcp", Timeout: util.DNSTimeout}
 
-	// Will retry the request based on the number of servers (n+1)
 	for _, ns := range nameservers {
 		in, _, err := udp.ExchangeContext(ctx, m, ns)
-		if in != nil && !in.Truncated {
+		if in != nil && !in.Truncated && in.Rcode != dns.RcodeServerFailure {
 			return in, err
 		}
 
-		// Try TCP if UDP fails
+		// Try TCP when UDP response is truncated or the server reported SERVFAIL.
 		in, _, err = tcp.ExchangeContext(ctx, m, ns)
-		if in != nil && !in.Truncated {
+		if in != nil && !in.Truncated && in.Rcode != dns.RcodeServerFailure {
 			return in, err
 		}
 	}

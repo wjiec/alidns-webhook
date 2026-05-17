@@ -181,21 +181,21 @@ func (s *AliSolver) validSecretData(data []byte) bool {
 
 // resolveChallengeDNSNames returns the FQDN and the zone encompassing the challenge.
 func (s *AliSolver) resolveChallengeDNSNames(ctx context.Context, challenge *acme.ChallengeRequest) (string, string) {
-	zone := challenge.ResolvedZone
-	// If the detected zone looks like a root domain with a trailing dot only,
-	// it is likely incorrect, so try to recover the authoritative zone via AliDNS.
-	if strings.Index(zone, ".") == len(zone)-1 {
-		klog.Warningf("The zone encompassing the FQDN is invalid: %v", zone)
-		resolvedZone, err := resolveZone(ctx, challenge.ResolvedFQDN, alidnsServers, true)
+	fqdn, zone := challenge.ResolvedFQDN, challenge.ResolvedZone
+	// A valid zone must itself contain at least two DNS labels.
+	if !strings.Contains(strings.TrimRight(zone, "."), ".") {
+		klog.Warningf("The zone %q is not a valid of FQDN %q, resolving via AliDNS", zone, fqdn)
+		resolvedZone, err := resolveZone(ctx, fqdn, alidnsServers, true)
 		if err != nil {
-			klog.Warningf("Failed to resolve FQDN by alidns servers: %s", err)
+			klog.Errorf("Failed to resolve zone for %q via AliDNS: %s", fqdn, err)
+			return fqdn, zone // keep original so the API call fails with a clear error
 		}
 
+		klog.Infof("Resolved zone %q for FQDN %q", resolvedZone, fqdn)
 		zone = resolvedZone
-		klog.Infof("Discovered zone record %q for fqdn %q", zone, challenge.ResolvedFQDN)
 	}
 
-	return challenge.ResolvedFQDN, zone
+	return fqdn, zone
 }
 
 // AliDNS is a client for manipulating Aliyun-DNS
