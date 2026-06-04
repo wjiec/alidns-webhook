@@ -1,23 +1,17 @@
-FROM golang:1.25-alpine AS build_deps
+FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache git
-
 WORKDIR /workspace
 
 COPY go.mod .
 COPY go.sum .
-
 RUN go mod download
 
-
-FROM build_deps AS builder
-
 COPY . .
-
 RUN CGO_ENABLED=0 go build -o alidns-webhook -ldflags '-s -w' .
 
 
-FROM alpine:3.17
+FROM alpine
 
 COPY --from=builder /workspace/alidns-webhook /usr/local/bin/alidns-webhook
 

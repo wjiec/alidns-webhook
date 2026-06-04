@@ -52,13 +52,13 @@ func (s *AliSolver) Present(challenge *acme.ChallengeRequest) error {
 	klog.Infof("Presenting TXT record: %v", challenge.ResolvedFQDN)
 	dns, err := s.loadAliDNS(challenge)
 	if err != nil {
-		klog.Errorf("Failed to load alidns cause by %q", err)
+		klog.Errorf("Failed to load alidns caused by %q", err)
 		return err
 	}
 
 	fqdn, zone := s.resolveChallengeDNSNames(s.ctx, challenge)
 	if err = dns.AddRecord(fqdn, zone, challenge.Key); err != nil {
-		klog.Errorf("Failed to add TXT record for %q cause by %q",
+		klog.Errorf("Failed to add TXT record for %q caused by %q",
 			challenge.ResolvedFQDN, err.Error())
 	}
 
@@ -82,7 +82,7 @@ func (s *AliSolver) CleanUp(challenge *acme.ChallengeRequest) error {
 
 	fqdn, zone := s.resolveChallengeDNSNames(s.ctx, challenge)
 	if err = dns.DeleteRecord(fqdn, zone); err != nil {
-		klog.Errorf("Failed to delete TXT record for %q cause by %q",
+		klog.Errorf("Failed to delete TXT record for %q caused by %q",
 			challenge.ResolvedFQDN, err.Error())
 	}
 
@@ -208,22 +208,27 @@ type AliDNS struct {
 //
 // If the dns record already exists, an attempt is made to update this record.
 func (dns *AliDNS) AddRecord(fqdn, zone, value string) error {
-	queryReq := new(alidns.DescribeDomainRecordsRequest)
-	queryReq.SetDomainName(util.UnFqdn(zone))
-	queryReq.SetTypeKeyWord(DNSRecordType)
-	queryReq.SetKeyWord(fqdn[:len(fqdn)-len(zone)-1])
-	queryReq.SetSearchMode(ExactSearch)
-	queryResp, err := dns.cli.DescribeDomainRecords(queryReq)
+	rr, err := parseRR(fqdn, zone)
 	if err != nil {
 		return err
 	}
 
+	queryReq := new(alidns.DescribeDomainRecordsRequest)
+	queryReq.SetDomainName(util.UnFqdn(zone))
+	queryReq.SetTypeKeyWord(DNSRecordType)
+	queryReq.SetKeyWord(rr)
+	queryReq.SetSearchMode(ExactSearch)
+	queryResp, err := dns.cli.DescribeDomainRecords(queryReq)
+	if err != nil || queryResp.Body == nil {
+		return errWrapOr(err, "invalid response from aliyun")
+	}
+
 	// add record when not exists
-	if *queryResp.Body.TotalCount == 0 {
+	if queryResp.Body.TotalCount != nil && *queryResp.Body.TotalCount == 0 {
 		req := new(alidns.AddDomainRecordRequest)
 		req.SetType(DNSRecordType)
 		req.SetDomainName(util.UnFqdn(zone))
-		req.SetRR(fqdn[:len(fqdn)-len(zone)-1])
+		req.SetRR(rr)
 		req.SetValue(value)
 
 		_, err = dns.cli.AddDomainRecord(req)
@@ -239,7 +244,7 @@ func (dns *AliDNS) AddRecord(fqdn, zone, value string) error {
 	req := new(alidns.UpdateDomainRecordRequest)
 	req.SetRecordId(*record.RecordId)
 	req.SetType(DNSRecordType)
-	req.SetRR(fqdn[:len(fqdn)-len(zone)-1])
+	req.SetRR(rr)
 	req.SetValue(value)
 
 	_, err = dns.cli.UpdateDomainRecord(req)
@@ -250,11 +255,31 @@ func (dns *AliDNS) AddRecord(fqdn, zone, value string) error {
 //
 // No error occurs when the dns record does not exist.
 func (dns *AliDNS) DeleteRecord(fqdn, zone string) error {
+	rr, err := parseRR(fqdn, zone)
+	if err != nil {
+		return err
+	}
+
 	req := new(alidns.DeleteSubDomainRecordsRequest)
 	req.SetDomainName(util.UnFqdn(zone))
-	req.SetRR(fqdn[:len(fqdn)-len(zone)-1])
+	req.SetRR(rr)
 	req.SetType(DNSRecordType)
 
-	_, err := dns.cli.DeleteSubDomainRecords(req)
+	_, err = dns.cli.DeleteSubDomainRecords(req)
 	return err
+}
+
+func errWrapOr(err error, format string, args ...any) error {
+	if err != nil {
+		return errors.Wrapf(err, format, args...)
+	}
+	return errors.Errorf(format, args...)
+}
+
+func parseRR(fqdn, zone string) (string, error) {
+	suffix := "." + zone
+	if !strings.HasSuffix(fqdn, suffix) {
+		return "", errors.Errorf("invalid FQDN %q, zone = %q", fqdn, zone)
+	}
+	return strings.TrimSuffix(fqdn, suffix), nil
 }

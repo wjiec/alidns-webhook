@@ -65,15 +65,13 @@ func (cfg *Config) Validate() error {
 
 // loadConfig decodes JSON configuration into the Config struct.
 func loadConfig(cfgJSON *extapi.JSON) (*Config, error) {
-	var cfg Config
-
-	// handle the 'base case' where no configuration has been provided
 	if cfgJSON == nil {
-		return &cfg, nil
+		return nil, errors.New("no solver configuration provided")
 	}
 
+	var cfg Config
 	if err := json.Unmarshal(cfgJSON.Raw, &cfg); err != nil {
-		return nil, fmt.Errorf("error decoding solver config: %v", err)
+		return nil, fmt.Errorf("failed to decoding solver config: %v", err)
 	}
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("validate solver config: %v", err)
