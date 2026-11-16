@@ -42,14 +42,31 @@ jobs:
         run: |
           kubectl cluster-info
 
+      - name: Set up Docker Buildx
+        id: builder
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+          driver-opts: network=kind
+          buildkitd-config-inline: |
+            [registry."my-registry:5000"]
+              http = true
+
       - name: Build webhook
         id: build
+        env:
+          BUILDER_NAME: ${{ steps.builder.outputs.name }}
+          LOCAL_REGISTRY: ${{ steps.kind.outputs.LOCAL_REGISTRY }}
         run: |
           IMAGE_TAG=$(openssl rand -hex 4)
-          IMAGE_REPOSITORY=${{ steps.kind.outputs.LOCAL_REGISTRY }}/alidns-webhook
-          IMAGE_NAME=$IMAGE_REPOSITORY IMAGE_TAG=$IMAGE_TAG make build
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "IMAGE_REPOSITORY=$IMAGE_REPOSITORY" >> $GITHUB_OUTPUT
+          IMAGE_REPOSITORY="${LOCAL_REGISTRY}/alidns-webhook"
+
+          # BuildKit uses the container port; nodes use the host port from LOCAL_REGISTRY.
+          docker buildx build --builder "$BUILDER_NAME" \
+            --tag "my-registry:5000/alidns-webhook:$IMAGE_TAG" --push .
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_REPOSITORY=$IMAGE_REPOSITORY" >> "$GITHUB_OUTPUT"
 
       - name: Install helm
         run: |
